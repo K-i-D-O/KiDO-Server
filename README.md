@@ -1,7 +1,7 @@
 ## django 서버 실행방법
  kido-serviceKey.json 디스코드에 있습니다.
  
-### windows 설정
+### WINDOWS 설정
 1. 먼저 kido-serviceKey.json을 root폴더 밑에 놔주세요.
 2. root폴더에서 python -m venv venv 터미널 입력
 3. cd venv
