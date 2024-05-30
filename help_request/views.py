@@ -170,7 +170,7 @@ def request_help(request):
         help_request = HelpRequest(requester=user, phone_number=phone_number)
         help_request.save()
         
-        # 모든 헬퍼에게 푸시 알림
+        # 반경 5km 이내의 헬퍼에게 푸시 알림
         send_push_notification_to_helpers(help_request)
         
         return JsonResponse({'status': 'success'}, status=200)

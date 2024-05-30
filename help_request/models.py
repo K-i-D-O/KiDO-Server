@@ -6,6 +6,8 @@ class HelperProfile(models.Model):
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     device_token = models.CharField(max_length=255, blank=True, null=True)
     is_helper = models.BooleanField(default=False)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f'{self.user.username} HelperProfile'
@@ -16,6 +18,8 @@ class HelpRequest(models.Model):
     phone_number = models.CharField(max_length=20)  # Add this line
     is_accepted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     
     def __str__(self):
         return f'Request by {self.requester.username} (Accepted: {self.is_accepted})'
