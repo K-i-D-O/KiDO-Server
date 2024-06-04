@@ -37,6 +37,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 # CORS 설정
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000", 
+    "https://ki-do.netlify.app"
 ]
 
 # CORS 자격증명 허용
@@ -65,7 +66,7 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["3.38.185.76"]
 
 
 # Application definition
