@@ -31,7 +31,10 @@ def send_push_notification(device_token, title, body, data):
     )
 
     try:
+        print(f"Attempting to send message to token: {device_token}")
+        print(f"Message: {message}")
         response = messaging.send(message)
+        print(f"Message sent successfully: {response}")
         return {'success': True, 'response': response}
     except firebase_admin.exceptions.FirebaseError as e:
         print(f"FCM API call error: {e}")
@@ -39,6 +42,7 @@ def send_push_notification(device_token, title, body, data):
     except Exception as e:
         print(f"General error: {e}")
         return {'success': False, 'error': str(e)}
+
 
 def send_push_notification_to_helpers(help_request):
     helpers = HelperProfile.objects.filter(is_helper=True)
@@ -67,11 +71,18 @@ def send_push_notification_to_requester(help_request):
     헬퍼가 도움 요청을 수락했을 때 요청자에게 푸시 알림을 보내는 함수
     """
     if help_request.requester.helperprofile.device_token:
-        send_push_notification(
+        print(f"Requester token: {help_request.requester.helperprofile.device_token}")
+        result = send_push_notification(
             help_request.requester.helperprofile.device_token,
             'KI-DO 도움요청이 수락되었습니다.',
             f'KI-DO 도움요청서비스가 수락되었습니다. 수락한사람:{help_request.helper.username}.',
-            {'helper_phone': help_request.helper.helperprofile.phone_number, 'url': requester_url }
+            {'helper_phone': help_request.helper.helperprofile.phone_number, 'url': requester_url}
         )
+        print(f"Send notification result: {result}")
+        return result
+    else:
+        print("No device token found for requester.")
+        return {'success': False, 'error': 'No device token found'}
+
 
 
