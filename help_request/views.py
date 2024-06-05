@@ -11,7 +11,7 @@ from .utils import send_push_notification_to_helpers, send_push_notification_to_
 
 
 KAKAO_CLIENT_ID = 'efb6faf4cdddaddd5f04d3cda75e0612'
-KAKAO_REDIRECT_URI = 'http://localhost:3000/help_req/settings_helper_main'
+KAKAO_REDIRECT_URI = 'https://ki-do.kr/help_req/settings_helper_main'
 
 def generate_random_phone_number():
     return f'010-{random.randint(1000,9999)}-{random.randint(1000,9999)}'
@@ -220,11 +220,13 @@ def respond_to_request(request, request_id, response):
 
                 try:
                     help_request = HelpRequest.objects.get(id=request_id)
+                    print(response)
                     if response == 'accept':
                         help_request.helper = helper_profile.user
                         help_request.is_accepted = True
                         help_request.save()
                         send_push_notification_to_requester(help_request)
+                        print(send_push_notification_to_requester(help_request))
                     elif response == 'reject':
                         help_request.is_accepted = False
                         help_request.delete()

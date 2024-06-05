@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from .models import HelperProfile
 from math import radians, sin, cos, sqrt, atan2
 
+helper_url = 'https://ki-do.kr/help_req/settings_helper_main'
+requester_url = 'https://ki-do.kr/help_req/req_success'
+
 def calculate_distance(lat1, lon1, lat2, lon2):
     # 지구 반지름 (km)
     R = 6371.0
@@ -53,7 +56,7 @@ def send_push_notification_to_helpers(help_request):
                 helper.device_token,
                 'New Help Request',
                 f'New help request from {help_request.requester.username}',
-                {'request_id': str(help_request.id), 'url': 'http://localhost:3000/help_req/settings_helper_main'}
+                {'request_id': str(help_request.id), 'url': helper_url }
             )
             print(result)
             if not result['success']:
@@ -68,7 +71,7 @@ def send_push_notification_to_requester(help_request):
             help_request.requester.helperprofile.device_token,
             'KI-DO 도움요청이 수락되었습니다.',
             f'KI-DO 도움요청서비스가 수락되었습니다. 수락한사람:{help_request.helper.username}.',
-            {'helper_phone': help_request.helper.helperprofile.phone_number, 'url': 'http://localhost:3000/help_req/req_success'}
+            {'helper_phone': help_request.helper.helperprofile.phone_number, 'url': requester_url }
         )
 
 
