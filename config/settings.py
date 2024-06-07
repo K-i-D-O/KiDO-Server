@@ -34,10 +34,11 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False  # HTTPS가 아닌 개발 환경에서는 False로 설정
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-# CORS 설정
+# CORS 설
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000", 
-    "https://ki-do.netlify.app"
+    "https://ki-do.kr",
+    "https://www.ki-do.kr",
 ]
 
 # CORS 자격증명 허용
@@ -66,7 +67,7 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-ALLOWED_HOSTS = ["3.38.185.76"]
+ALLOWED_HOSTS = ['ki-do.kr', 'www.ki-do.kr']
 
 
 # Application definition

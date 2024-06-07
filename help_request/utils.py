@@ -45,6 +45,7 @@ def send_push_notification(device_token, title, body, data):
 
 
 def send_push_notification_to_helpers(help_request):
+    print("send_push_notification_to_helpers called")
     # helpers = HelperProfile.objects.filter(is_helper=True)
     # nearby_helpers = []
     # for helper in helpers:
@@ -66,7 +67,7 @@ def send_push_notification_to_helpers(help_request):
     #         if not result['success']:
     #             print(f"Failed to send notification to {helper.user.username}: {result['error']}")
     helpers = HelperProfile.objects.filter(is_helper=True)
-
+    print(f"Found {helpers.count()} helpers")
     for helper in helpers:
         if helper.device_token:
             print(f"Sending notification to {helper.user.username} with token {helper.device_token}")
