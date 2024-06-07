@@ -10,7 +10,7 @@
 6. cd .. root폴더로 나옴
 7. manage.py가 있는 폴더에서 python manage.py makemigrations
 8. manage.py가 있는 폴더에서 python manage.py migrate
-   \nRunning migrations:\n
+   <br>Running migrations:<br>
    No migrations to apply. 이 나왔다면 이미 migrate가 적용된 것.
 9. manage.py가 있는 폴더에서 python manage.py runserver
     
@@ -23,7 +23,7 @@
 6. root 폴더에서 pip3 install -r requirements.txt
 7. manage.py가 있는 폴더에서 python3 manage.py makemigrations
 8. manage.py가 있는 폴더에서 python3 manage.py migrate
-   \nRunning migrations:\n
+   <br>Running migrations:<br>
    No migrations to apply. 이 나왔다면 이미 migrate가 적용된 것.
 9. manage.py가 있는 폴더에서 python3 manage.py runserver
 
