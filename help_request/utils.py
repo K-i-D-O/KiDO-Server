@@ -7,6 +7,16 @@ from math import radians, sin, cos, sqrt, atan2
 helper_url = 'https://ki-do.kr/help_req/settings_helper_main'
 requester_url = 'https://ki-do.kr/help_req/req_success'
 
+# 유효하지 않은 기기 토큰을 무효화하는 함수
+def invalidate_device_token(device_token):
+    try:
+        profile = HelperProfile.objects.get(device_token=device_token)
+        profile.device_token = None
+        profile.save()
+        print(f"Invalidated token: {device_token}")
+    except HelperProfile.DoesNotExist:
+        print(f"No profile found with token: {device_token}")
+
 def calculate_distance(lat1, lon1, lat2, lon2):
     # 지구 반지름 (km)
     R = 6371.0
@@ -17,17 +27,15 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     distance = R * c
     return distance
 
+# FCM을 통해 푸시 알림을 보내는 함수
 def send_push_notification(device_token, title, body, data):
-    """
-    FCM을 통해 푸시 알림을 보내는 함수
-    """
     message = messaging.Message(
         notification=messaging.Notification(
             title=title,
             body=body,
         ),
         token=device_token,
-        data={key: str(value) for key, value in data.items()}  # 모든 값을 문자열로 변환
+        data={key: str(value) for key, value in data.items()}
     )
 
     try:
@@ -38,6 +46,9 @@ def send_push_notification(device_token, title, body, data):
         return {'success': True, 'response': response}
     except firebase_admin.exceptions.FirebaseError as e:
         print(f"FCM API call error: {e}")
+        if 'not-found' in str(e):
+            print(f"Invalid token detected: {device_token}")
+            invalidate_device_token(device_token)
         return {'success': False, 'error': str(e)}
     except Exception as e:
         print(f"General error: {e}")
