@@ -45,26 +45,41 @@ def send_push_notification(device_token, title, body, data):
 
 
 def send_push_notification_to_helpers(help_request):
-    helpers = HelperProfile.objects.filter(is_helper=True)
-    nearby_helpers = []
-    for helper in helpers:
-        if helper.latitude is not None and helper.longitude is not None:
-            distance = calculate_distance(help_request.latitude, help_request.longitude, helper.latitude, helper.longitude)
-            if distance <= 5:  # 5km 이내의 헬퍼만 포함
-                nearby_helpers.append(helper)
+    # helpers = HelperProfile.objects.filter(is_helper=True)
+    # nearby_helpers = []
+    # for helper in helpers:
+    #     if helper.latitude is not None and helper.longitude is not None:
+    #         distance = calculate_distance(help_request.latitude, help_request.longitude, helper.latitude, helper.longitude)
+    #         if distance <= 5:  # 5km 이내의 헬퍼만 포함
+    #             nearby_helpers.append(helper)
 
-    for helper in nearby_helpers:
+    # for helper in nearby_helpers:
+    #     if helper.device_token:
+    #         print(f"Sending notification to {helper.user.username} with token {helper.device_token}")
+    #         result = send_push_notification(
+    #             helper.device_token,
+    #             'New Help Request',
+    #             f'New help request from {help_request.requester.username}',
+    #             {'request_id': str(help_request.id), 'url': helper_url }
+    #         )
+    #         print(result)
+    #         if not result['success']:
+    #             print(f"Failed to send notification to {helper.user.username}: {result['error']}")
+    helpers = HelperProfile.objects.filter(is_helper=True)
+
+    for helper in helpers:
         if helper.device_token:
             print(f"Sending notification to {helper.user.username} with token {helper.device_token}")
             result = send_push_notification(
                 helper.device_token,
-                'New Help Request',
-                f'New help request from {help_request.requester.username}',
+                'KI-DO 도움요청',
+                f'주변에서 도움을 요청하였습니다. 요청한사람:{help_request.requester.username}',
                 {'request_id': str(help_request.id), 'url': helper_url }
             )
             print(result)
             if not result['success']:
                 print(f"Failed to send notification to {helper.user.username}: {result['error']}")
+
 
 def send_push_notification_to_requester(help_request):
     """
@@ -74,7 +89,7 @@ def send_push_notification_to_requester(help_request):
         print(f"Requester token: {help_request.requester.helperprofile.device_token}")
         result = send_push_notification(
             help_request.requester.helperprofile.device_token,
-            'KI-DO 도움요청이 수락되었습니다.',
+            'KI-DO 도움요청',
             f'KI-DO 도움요청서비스가 수락되었습니다. 수락한사람:{help_request.helper.username}.',
             {'helper_phone': help_request.helper.helperprofile.phone_number, 'url': requester_url}
         )
