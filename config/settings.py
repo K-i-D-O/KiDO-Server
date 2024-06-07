@@ -67,7 +67,9 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+
 ALLOWED_HOSTS = ['ki-do.kr', 'www.ki-do.kr']
+
 
 
 # Application definition
