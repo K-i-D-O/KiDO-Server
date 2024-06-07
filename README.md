@@ -5,7 +5,8 @@
 1. 먼저 kido-serviceKey.json을 root폴더 밑에 놔주세요.
 2. root폴더에서 python -m venv venv 터미널 입력
 3. cd venv
-4. Scripts/activate.ps1 터미널 입력(안된다면 powershell을 관리자 권한으로 실행후 Set-ExecutionPolicy Unrestricted 입력 후 y입력)
+4. Scripts/activate.ps1 터미널 입력
+   <br>(안된다면 powershell을 관리자 권한으로 실행후 Set-ExecutionPolicy Unrestricted 입력 후 y입력)
 5. pip install -r requirements.txt
 6. cd .. root폴더로 나옴
 7. manage.py가 있는 폴더에서 python manage.py makemigrations
