@@ -65,7 +65,9 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+
 ALLOWED_HOSTS = []
+
 
 
 # Application definition

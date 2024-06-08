@@ -220,11 +220,13 @@ def respond_to_request(request, request_id, response):
 
                 try:
                     help_request = HelpRequest.objects.get(id=request_id)
+                    print(response)
                     if response == 'accept':
                         help_request.helper = helper_profile.user
                         help_request.is_accepted = True
                         help_request.save()
                         send_push_notification_to_requester(help_request)
+                        print(send_push_notification_to_requester(help_request))
                     elif response == 'reject':
                         help_request.is_accepted = False
                         help_request.delete()

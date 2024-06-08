@@ -4,6 +4,18 @@ from django.contrib.auth.models import User
 from .models import HelperProfile
 from math import radians, sin, cos, sqrt, atan2
 
+
+# 유효하지 않은 기기 토큰을 무효화하는 함수
+def invalidate_device_token(device_token):
+    try:
+        profile = HelperProfile.objects.get(device_token=device_token)
+        profile.device_token = None
+        profile.save()
+        print(f"Invalidated token: {device_token}")
+    except HelperProfile.DoesNotExist:
+        print(f"No profile found with token: {device_token}")
+
+
 def calculate_distance(lat1, lon1, lat2, lon2):
     # 지구 반지름 (km)
     R = 6371.0
@@ -24,44 +36,50 @@ def send_push_notification(device_token, title, body, data):
             body=body,
         ),
         token=device_token,
-        data={key: str(value) for key, value in data.items()}  # 모든 값을 문자열로 변환
+        data={key: str(value) for key, value in data.items()}
     )
 
     try:
+        print(f"Attempting to send message to token: {device_token}")
+        print(f"Message: {message}")
         response = messaging.send(message)
+        print(f"Message sent successfully: {response}")
         return {'success': True, 'response': response}
     except firebase_admin.exceptions.FirebaseError as e:
         print(f"FCM API call error: {e}")
+        if 'not-found' in str(e):
+            print(f"Invalid token detected: {device_token}")
+            invalidate_device_token(device_token)
         return {'success': False, 'error': str(e)}
     except Exception as e:
         print(f"General error: {e}")
         return {'success': False, 'error': str(e)}
 
-# def send_push_notification_to_helpers(help_request):
-#     helpers = HelperProfile.objects.filter(is_helper=True)
-#     nearby_helpers = []
-#     for helper in helpers:
-#         if helper.latitude is not None and helper.longitude is not None:
-#             distance = calculate_distance(help_request.latitude, help_request.longitude, helper.latitude, helper.longitude)
-#             if distance <= 5:  # 5km 이내의 헬퍼만 포함
-#                 nearby_helpers.append(helper)
-
-#     for helper in nearby_helpers:
-#         if helper.device_token:
-#             print(f"Sending notification to {helper.user.username} with token {helper.device_token}")
-#             result = send_push_notification(
-#                 helper.device_token,
-#                 'New Help Request',
-#                 f'New help request from {help_request.requester.username}',
-#                 {'request_id': str(help_request.id), 'url': 'http://localhost:3000/help_req/settings_helper_main'}
-#             )
-#             print(result)
-#             if not result['success']:
-#                 print(f"Failed to send notification to {helper.user.username}: {result['error']}")
 
 def send_push_notification_to_helpers(help_request):
-    helpers = HelperProfile.objects.filter(is_helper=True)
+    print("send_push_notification_to_helpers called")
+    # helpers = HelperProfile.objects.filter(is_helper=True) // 거리계산 로직
+    # nearby_helpers = []
+    # for helper in helpers:
+    #     if helper.latitude is not None and helper.longitude is not None:
+    #         distance = calculate_distance(help_request.latitude, help_request.longitude, helper.latitude, helper.longitude)
+    #         if distance <= 5:  # 5km 이내의 헬퍼만 포함
+    #             nearby_helpers.append(helper)
 
+    # for helper in nearby_helpers:
+    #     if helper.device_token:
+    #         print(f"Sending notification to {helper.user.username} with token {helper.device_token}")
+    #         result = send_push_notification(
+    #             helper.device_token,
+    #             'New Help Request',
+    #             f'New help request from {help_request.requester.username}',
+    #             {'request_id': str(help_request.id), 'url': helper_url }
+    #         )
+    #         print(result)
+    #         if not result['success']:
+    #             print(f"Failed to send notification to {helper.user.username}: {result['error']}")
+    helpers = HelperProfile.objects.filter(is_helper=True)
+    print(f"Found {helpers.count()} helpers")
     for helper in helpers:
         if helper.device_token:
             print(f"Sending notification to {helper.user.username} with token {helper.device_token}")
@@ -74,7 +92,6 @@ def send_push_notification_to_helpers(help_request):
             print(result)
             if not result['success']:
                 print(f"Failed to send notification to {helper.user.username}: {result['error']}")
-
 
 
 def send_push_notification_to_requester(help_request):
