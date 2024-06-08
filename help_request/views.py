@@ -11,7 +11,7 @@ from .utils import send_push_notification_to_helpers, send_push_notification_to_
 
 
 KAKAO_CLIENT_ID = 'efb6faf4cdddaddd5f04d3cda75e0612'
-KAKAO_REDIRECT_URI = 'http://localhost:3000/help_req/settings_helper_main'
+KAKAO_REDIRECT_URI = 'https://ki-do.kr//help_req/settings_helper_main'
 
 def generate_random_phone_number():
     return f'010-{random.randint(1000,9999)}-{random.randint(1000,9999)}'
