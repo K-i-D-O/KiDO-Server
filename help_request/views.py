@@ -172,7 +172,7 @@ def request_help(request):
         
         # 반경 5km 이내의 헬퍼에게 푸시 알림
         send_push_notification_to_helpers(help_request)
-        
+        print(1) 
         return JsonResponse({'status': 'success'}, status=200)
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
