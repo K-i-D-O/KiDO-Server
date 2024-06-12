@@ -116,9 +116,13 @@ def kakao_login_helper(request):
 
 @csrf_exempt
 def kakao_callback(request):
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+
     code = data.get('code')
-    print(code)
+    print(f"Received code: {code}")
     if not code:
         return JsonResponse({'status': 'error', 'message': 'No code provided'}, status=400)
 
@@ -130,10 +134,13 @@ def kakao_callback(request):
         'code': code,
     })
 
+    print(f"Token response status: {token_response.status_code}")
+    print(f"Token response body: {token_response.text}")
+
     token_json = token_response.json()
     access_token = token_json.get('access_token')
     if not access_token:
-        return JsonResponse({'status': 'error', 'message': 'Failed to get access token'}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'Failed to get access token', 'details': token_json}, status=400)
 
     # Get user info
     user_response = requests.get('https://kapi.kakao.com/v2/user/me', headers={
@@ -151,7 +158,6 @@ def kakao_callback(request):
     }
     # Redirect to frontend with user data as query parameters
     return JsonResponse({'status': 'success', 'user_data': user_data}, status=200)
-
 @csrf_exempt
 def request_help(request):
     if request.method == "POST":
