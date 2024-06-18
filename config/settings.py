@@ -69,7 +69,7 @@ CORS_ALLOW_HEADERS = [
 ]
 
 
-ALLOWED_HOSTS = ['ki-do.kr', 'www.ki-do.kr']
+ALLOWED_HOSTS = ['ki-do.kr', 'www.ki-do.kr','3.34.8.4']
 
 
 
