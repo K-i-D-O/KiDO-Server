@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt 
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from django.utils.crypto import get_random_string
 from .models import HelpRequest, HelperProfile
 from .utils import send_push_notification_to_helpers, send_push_notification_to_requester
 
@@ -37,19 +38,29 @@ def save_token(request):
             return JsonResponse({'status': 'error', 'message': 'User does not exist'}, status=404)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-
 @csrf_exempt
 def guest_login(request):
     if request.method == 'POST':
-        username = f'guest_{random.randint(1000,9999)}'
+        device_id = request.COOKIES.get('device_id')
+
+        if device_id is None:
+            device_id = get_random_string(32)
+            response = JsonResponse({'status': 'success', 'username': 'guest'}, status=200)
+            response.set_cookie('device_id', device_id, max_age=365*24*60*60)  # 쿠키 1년 유지
+        else:
+            response = JsonResponse({'status': 'success', 'username': 'guest'}, status=200)
+        
+        username = f'guest_{device_id}'
         user, created = User.objects.get_or_create(username=username)
+        
         if created:
             user.set_unusable_password()
             user.save()
             HelperProfile.objects.create(user=user)
-            print(user)
+        
         login(request, user)
-        return JsonResponse({'status': 'success', 'username': username}, status=200)
+        return response
+    
     return JsonResponse({'status': 'error'}, status=400)
 
 @csrf_exempt
