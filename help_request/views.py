@@ -39,71 +39,80 @@ def save_token(request):
             return JsonResponse({'status': 'error', 'message': 'User does not exist'}, status=404)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
-# @csrf_exempt
-# def guest_login(request):
-#     if request.method == 'POST':
-#         device_id = request.COOKIES.get('device_id')
-
-#         if device_id is None:
-#             device_id = get_random_string(32)
-#             response = JsonResponse({'status': 'success', 'username': 'guest'}, status=200)
-#             response.set_cookie('device_id', device_id, max_age=365*24*60*60)  # 쿠키 1년 유지
-#         else:
-#             response = JsonResponse({'status': 'success', 'username': 'guest'}, status=200)
-        
-#         username = f'guest_{device_id}'
-#         user, created = User.objects.get_or_create(username=username)
-        
-#         if created:
-#             user.set_unusable_password()
-#             user.save()
-#             HelperProfile.objects.create(user=user)
-        
-#         login(request, user)
-#         return response
-    
-#     return JsonResponse({'status': 'error'}, status=400)
-
 @csrf_exempt
 def guest_login(request):
     if request.method == 'POST':
-        # 쿠키에서 기존 guest_username 확인
-        guest_username = request.COOKIES.get('guest_username')
-        print(guest_username)
+        # 기존의 device_id 쿠키를 확인
+        device_id = request.COOKIES.get('device_id')
 
-        if guest_username:
-            try:
-                # 쿠키에 저장된 guest_username으로 기존 유저 찾기
-                user = User.objects.get(username=guest_username)
-                login(request, user)  # Django의 세션 기반 인증 사용
-                return JsonResponse({'status': 'success', 'username': guest_username}, status=200)
-            except User.DoesNotExist:
-                # 쿠키에 유저가 존재하지 않으면 새로운 유저 생성 필요
-                pass
-
-        # 중복 방지를 위해 고유한 guest ID 생성
-        while True:
-            username = f'guest_{random.randint(1000,9999)}'
-            if not User.objects.filter(username=username).exists():
-                break
-
-        # 사용자 생성
+        # 만약 쿠키가 없으면 새로운 device_id를 생성
+        if not device_id:
+            device_id = get_random_string(32)
+            response = JsonResponse({'status': 'success', 'username': f'guest_{device_id}'})
+            response.set_cookie('device_id', device_id, max_age=365*24*60*60)  # 쿠키를 1년 동안 유지
+        else:
+            response = JsonResponse({'status': 'success', 'username': f'guest_{device_id}'})
+        
+        # guest_{device_id} 형식의 username을 생성
+        username = f'guest_{device_id}'
+        
+        # 해당 사용자명으로 유저가 존재하는지 확인, 없으면 생성
         user, created = User.objects.get_or_create(username=username)
+        
         if created:
-            user.set_unusable_password()
+            user.set_unusable_password()  # 게스트 사용자는 비밀번호를 사용할 수 없도록 설정
             user.save()
-            HelperProfile.objects.create(user=user)
+            HelperProfile.objects.create(user=user)  # 프로필 생성
 
-        # 사용자 로그인
+        # 세션을 사용해 로그인 처리
         login(request, user)
 
-        # 쿠키 설정 (쿠키 유효 기간: 30일)
-        response = JsonResponse({'status': 'success', 'username': username})
-        response.set_cookie('guest_username', username, max_age=30*24*60*60)  # 30일 동안 쿠키 유지
-
+        # 응답 반환
         return response
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+# @csrf_exempt
+# def guest_login(request):
+#     if request.method == 'POST':
+#         # 세션에서 기존 guest_username 확인
+#         guest_username = request.session.get('guest_username')
+#         print(f"Received guest_username from session: {guest_username}")  # 로그로 확인
+
+#         if guest_username:
+#             try:
+#                 # 세션에 저장된 guest_username으로 기존 유저 찾기
+#                 user = User.objects.get(username=guest_username)
+#                 print(f"User found in DB with guest_username: {guest_username}")  # 로그 추가
+#                 login(request, user)  # Django의 세션 기반 인증 사용
+#                 return JsonResponse({'status': 'success', 'username': guest_username}, status=200)
+#             except User.DoesNotExist:
+#                 print(f"User with guest_username {guest_username} not found")  # 로그 추가
+#                 pass
+
+#         # 중복 방지를 위해 고유한 guest ID 생성
+#         while True:
+#             username = f'guest_{random.randint(1000,9999)}'
+#             if not User.objects.filter(username=username).exists():
+#                 break
+
+#         # 새로운 사용자 생성
+#         user, created = User.objects.get_or_create(username=username)
+#         if created:
+#             print(f"Created new guest user with username: {username}")  # 로그 추가
+#             user.set_unusable_password()
+#             user.save()
+#             HelperProfile.objects.create(user=user)
+
+#         # 사용자 로그인
+#         login(request, user)
+
+#         # 세션에 guest_username 저장
+#         request.session['guest_username'] = username
+#         print(f"Session set for guest_username: {username}")  # 세션 설정 후 로그 추가
+
+#         return JsonResponse({'status': 'success', 'username': username})
+
+#     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
 
 
 @csrf_exempt

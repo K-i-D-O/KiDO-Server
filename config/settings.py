@@ -28,14 +28,13 @@ SECRET_KEY = 'django-insecure-4foa&*2_h+v%@z-jjlym6v528#67dd_l=e05jap3*dh4ptea2m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Session settings
-SESSION_COOKIE_NAME = 'kido-app'
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # 배포 시 HTTPS 필수
-SESSION_COOKIE_AGE = 1209600  # 2주 동안 세션 유지
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-
+# 세션 설정
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # 세션을 DB에 저장
+SESSION_COOKIE_NAME = 'kido-app'  # 세션 쿠키 이름
+SESSION_COOKIE_HTTPONLY = True  # 자바스크립트로 접근 불가
+SESSION_COOKIE_SECURE = False  # 개발 환경에서 HTTPS가 아닐 때는 False로 설정
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # 브라우저가 닫혀도 세션 유지
+SESSION_COOKIE_SAMESITE = 'None'  # 세션 쿠키에 대한 SameSite 정책
 
 # CORS 설정
 CORS_ALLOWED_ORIGINS = [
@@ -69,7 +68,7 @@ CORS_ALLOW_HEADERS = [
 ]
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 
