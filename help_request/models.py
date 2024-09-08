@@ -8,9 +8,22 @@ class HelperProfile(models.Model):
     is_helper = models.BooleanField(default=False)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    sendbird_user_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
 
     def __str__(self):
         return f'{self.user.username} HelperProfile'
+
+    def generate_sendbird_user_id(self):
+        # 헬퍼 프로파일에서 Sendbird User ID를 생성하는 로직
+        if self.user.username.startswith('guest_'):
+            return self.user.username
+        else:
+            return f'kakao_{self.user.username}'  # 예: 카카오 ID 기반으로 설정
+
+    def save(self, *args, **kwargs):
+        if not self.sendbird_user_id:
+            self.sendbird_user_id = self.generate_sendbird_user_id()
+        super().save(*args, **kwargs)
     
 class HelpRequest(models.Model):
     requester = models.ForeignKey(User, related_name='requests', on_delete=models.CASCADE)

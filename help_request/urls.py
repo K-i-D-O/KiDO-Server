@@ -13,4 +13,5 @@ urlpatterns = [
     path('api/request-details/<int:request_id>/', views.get_request_details, name='request-details'),
     path('api/respond-to-request/<int:request_id>/<str:response>/', views.respond_to_request, name='respond_to_request'),
     path('api/save-token/', views.save_token, name='save_token'),
+    path('api/start_chat/', views.start_chat, name='start_chat'),
 ]

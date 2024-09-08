@@ -8,7 +8,8 @@ from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from .models import HelpRequest, HelperProfile
-from .utils import send_push_notification_to_helpers, send_push_notification_to_requester
+
+from .utils import send_push_notification_to_helpers, send_push_notification_to_requester , register_sendbird_chat_user, create_or_get_group_channel, send_message , register_sendbird_user
 
 
 KAKAO_CLIENT_ID = 'efb6faf4cdddaddd5f04d3cda75e0612'
@@ -38,30 +39,72 @@ def save_token(request):
             return JsonResponse({'status': 'error', 'message': 'User does not exist'}, status=404)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
+# @csrf_exempt
+# def guest_login(request):
+#     if request.method == 'POST':
+#         device_id = request.COOKIES.get('device_id')
+
+#         if device_id is None:
+#             device_id = get_random_string(32)
+#             response = JsonResponse({'status': 'success', 'username': 'guest'}, status=200)
+#             response.set_cookie('device_id', device_id, max_age=365*24*60*60)  # 쿠키 1년 유지
+#         else:
+#             response = JsonResponse({'status': 'success', 'username': 'guest'}, status=200)
+        
+#         username = f'guest_{device_id}'
+#         user, created = User.objects.get_or_create(username=username)
+        
+#         if created:
+#             user.set_unusable_password()
+#             user.save()
+#             HelperProfile.objects.create(user=user)
+        
+#         login(request, user)
+#         return response
+    
+#     return JsonResponse({'status': 'error'}, status=400)
+
 @csrf_exempt
 def guest_login(request):
     if request.method == 'POST':
-        device_id = request.COOKIES.get('device_id')
+        # 쿠키에서 기존 guest_username 확인
+        guest_username = request.COOKIES.get('guest_username')
+        print(guest_username)
 
-        if device_id is None:
-            device_id = get_random_string(32)
-            response = JsonResponse({'status': 'success', 'username': 'guest'}, status=200)
-            response.set_cookie('device_id', device_id, max_age=365*24*60*60)  # 쿠키 1년 유지
-        else:
-            response = JsonResponse({'status': 'success', 'username': 'guest'}, status=200)
-        
-        username = f'guest_{device_id}'
+        if guest_username:
+            try:
+                # 쿠키에 저장된 guest_username으로 기존 유저 찾기
+                user = User.objects.get(username=guest_username)
+                login(request, user)  # Django의 세션 기반 인증 사용
+                return JsonResponse({'status': 'success', 'username': guest_username}, status=200)
+            except User.DoesNotExist:
+                # 쿠키에 유저가 존재하지 않으면 새로운 유저 생성 필요
+                pass
+
+        # 중복 방지를 위해 고유한 guest ID 생성
+        while True:
+            username = f'guest_{random.randint(1000,9999)}'
+            if not User.objects.filter(username=username).exists():
+                break
+
+        # 사용자 생성
         user, created = User.objects.get_or_create(username=username)
-        
         if created:
             user.set_unusable_password()
             user.save()
             HelperProfile.objects.create(user=user)
-        
+
+        # 사용자 로그인
         login(request, user)
+
+        # 쿠키 설정 (쿠키 유효 기간: 30일)
+        response = JsonResponse({'status': 'success', 'username': username})
+        response.set_cookie('guest_username', username, max_age=30*24*60*60)  # 30일 동안 쿠키 유지
+
         return response
-    
-    return JsonResponse({'status': 'error'}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
 
 @csrf_exempt
 def become_helper(request):
@@ -83,6 +126,9 @@ def become_helper(request):
             profile = user.helperprofile
             profile.is_helper = is_helper
             profile.save()
+            sendbird_response = register_sendbird_user(user)  # Sendbird 사용자 등록
+            if sendbird_response.get('error'):
+                return JsonResponse({'status': 'error', 'message': sendbird_response.get('message')}, status=400)
             return JsonResponse({'status': 'success', 'message': f'Helper status set to {is_helper}'}, status=200)
         return JsonResponse({'status': 'error', 'message': 'Invalid data'}, status=400)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
@@ -220,6 +266,7 @@ def respond_to_request(request, request_id, response):
         try:
             data = json.loads(request.body)
             kakao_id = data.get('kakao_id')
+            print(kakao_id)
 
             if not kakao_id:
                 return JsonResponse({'status': 'error', 'message': 'Kakao ID not provided'}, status=400)
@@ -254,3 +301,55 @@ def respond_to_request(request, request_id, response):
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def start_chat(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        caller_username = data.get('caller_username')
+        callee_username = data.get('callee_username')
+
+        if not caller_username or not callee_username:
+            return JsonResponse({'status': 'error', 'message': 'Both caller and callee usernames must be provided'}, status=400)
+
+        try:
+            caller = User.objects.get(username=caller_username)
+            callee = User.objects.get(username=callee_username)
+        except User.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Caller or callee does not exist'}, status=404)
+
+        # Sendbird에 사용자를 등록 또는 가져오기
+        caller_sendbird_response = register_sendbird_chat_user(caller)
+        callee_sendbird_response = register_sendbird_chat_user(callee)
+
+        caller_sendbird_user_id = caller_sendbird_response['user_id']
+        callee_sendbird_user_id = callee_sendbird_response['user_id']
+
+        # 1:1 대화방 생성 또는 조회 (distinct 옵션 사용)
+        try:
+            group_channel = create_or_get_group_channel(
+                [caller_sendbird_user_id, callee_sendbird_user_id],
+                channel_name=f'{caller_username}_and_{callee_username}_chat',
+                is_distinct=True  # distinct 옵션을 통해 동일 사용자 간 중복 채널 생성 방지
+            )
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f'Failed to create or get 1:1 channel: {str(e)}'}, status=500)
+
+        # 메시지 전송
+        try:
+            message_response = send_message(
+                group_channel['channel_url'],
+                caller_sendbird_user_id,
+                message="Hello, this is the start of your chat!"
+            )
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f'Failed to send message: {str(e)}'}, status=500)
+
+        # 성공 응답
+        return JsonResponse({
+            'status': 'success',
+            'channel_url': group_channel['channel_url'],
+            'message_id': message_response['message_id']
+        }, status=200)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)

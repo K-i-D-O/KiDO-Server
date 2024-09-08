@@ -1,6 +1,8 @@
 import firebase_admin
+import requests
 from firebase_admin import messaging
 from django.contrib.auth.models import User
+from django.conf import settings
 from .models import HelperProfile
 from math import radians, sin, cos, sqrt, atan2
 
@@ -107,3 +109,74 @@ def send_push_notification_to_requester(help_request):
         )
 
 
+### sendbird chat
+
+# 사용자 등록 (Sendbird Chat용)
+def register_sendbird_chat_user(user):
+    url = f'https://api-{settings.SENDBIRD_APP_ID}.sendbird.com/v3/users'
+    headers = {
+        'Content-Type': 'application/json',
+        'Api-Token': settings.SENDBIRD_API_TOKEN,
+    }
+    sendbird_user_id = user.helperprofile.sendbird_user_id if hasattr(user, 'helperprofile') else f'guest_{user.id}'
+    data = {
+        'user_id': sendbird_user_id,
+        'nickname': user.username,
+        'profile_url': '',
+    }
+    response = requests.post(url, headers=headers, json=data)
+    return response.json()
+
+# 그룹 채널 생성 또는 조회
+def create_or_get_group_channel(user_ids, channel_name):
+    url = f'https://api-{settings.SENDBIRD_APP_ID}.sendbird.com/v3/group_channels'
+    headers = {
+        'Content-Type': 'application/json',
+        'Api-Token': settings.SENDBIRD_API_TOKEN,
+    }
+    data = {
+        'user_ids': user_ids,
+        'is_distinct': True,  # 중복 채널 방지
+        'name': channel_name,
+    }
+    response = requests.post(url, headers=headers, json=data)
+    return response.json()
+
+# 메시지 전송
+def send_message(channel_url, sender_user_id, message):
+    url = f'https://api-{settings.SENDBIRD_APP_ID}.sendbird.com/v3/group_channels/{channel_url}/messages'
+    headers = {
+        'Content-Type': 'application/json',
+        'Api-Token': settings.SENDBIRD_API_TOKEN,
+    }
+    data = {
+        'message_type': 'MESG',
+        'user_id': sender_user_id,
+        'message': message,
+    }
+    response = requests.post(url, headers=headers, json=data)
+    return response.json()
+
+def register_sendbird_user(user):
+    """
+    Sendbird 서버에 사용자를 등록하는 함수.
+    """
+    url = f'https://api-{settings.SENDBIRD_APP_ID}.sendbird.com/v3/users'
+    headers = {
+        'Content-Type': 'application/json',
+        'Api-Token': settings.SENDBIRD_API_TOKEN,
+    }
+    
+    # sendbird_user_id는 HelperProfile에 저장된 값을 사용하거나, 없을 경우 guest 형식으로 생성
+    sendbird_user_id = user.helperprofile.sendbird_user_id if hasattr(user, 'helperprofile') and user.helperprofile.sendbird_user_id else f'guest_{user.id}'
+    data = {
+        'user_id': sendbird_user_id,
+        'nickname': user.username,
+        'profile_url': '',  # 프로필 이미지가 있을 경우 여기 추가 가능
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        return response.json()  # 성공 또는 오류 메시지 반환
+    except requests.RequestException as e:
+        return {'error': str(e)}

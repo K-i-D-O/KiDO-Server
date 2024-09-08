@@ -31,8 +31,11 @@ DEBUG = True
 # Session settings
 SESSION_COOKIE_NAME = 'kido-app'
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # HTTPS가 아닌 개발 환경에서는 False로 설정
+SESSION_COOKIE_SECURE = False  # 배포 시 HTTPS 필수
+SESSION_COOKIE_AGE = 1209600  # 2주 동안 세션 유지
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
 
 # CORS 설정
 CORS_ALLOWED_ORIGINS = [
@@ -173,3 +176,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 cred = credentials.Certificate("kido-serviceKey.json")
 firebase_admin.initialize_app(cred)
 
+# sendbird api key
+SENDBIRD_API_TOKEN = '85ac7c904852d362b45fa544e65e150dd7caa2df'
+SENDBIRD_APP_ID = 'CB6F80DF-A091-43E0-AC30-058C953E88E4'
